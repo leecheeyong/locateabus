@@ -3,12 +3,13 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { REGION } from './data/regions.js'
 import { useTransitFeed } from './composables/useTransitFeed.js'
 import SearchPanel from './components/SearchPanel.vue'
+import VehicleSheet from './components/VehicleSheet.vue'
 
 const feed = useTransitFeed()
 const vehicles = feed.vehicles
-
 const query = ref('')
 const filter = ref('all')
+const selected = ref(null)
 
 const counts = computed(() => ({
   all: vehicles.value.length,
@@ -26,7 +27,8 @@ const filtered = computed(() => {
       v.id.toLowerCase().includes(q) ||
       v.agencyName.toLowerCase().includes(q) ||
       String(v.tripId || '').toLowerCase().includes(q) ||
-      String(v.routeId || '').toLowerCase().includes(q)
+      String(v.routeId || '').toLowerCase().includes(q) ||
+      String(v.plate || '').toLowerCase().includes(q)
     )
   }
   return rows
@@ -34,22 +36,53 @@ const filtered = computed(() => {
 
 let L = null
 let map = null
-let layer = null
+let busLayer = null
 let tick = null
+let raf = 0
+
+const BUS = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="4" width="14" height="12" rx="2"/><path d="M5 10h14M8 20v-4M16 20v-4"/></svg>'
+const TRAIN = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="3" width="12" height="14" rx="2"/><path d="M6 10h12"/></svg>'
 
 function paint() {
-  if (!map || !L || !layer) return
-  layer.clearLayers()
+  if (!map || !L || !busLayer) return
+  busLayer.clearLayers()
   for (const v of filtered.value.slice(0, 400)) {
-    L.circleMarker([v.lat, v.lng], { radius: 6 }).addTo(layer).bindPopup(v.id)
+    const on = selected.value && selected.value.id === v.id ? ' vm-on' : ''
+    const cls = v.isTrain ? 'vm-train' : 'vm-bus'
+    const icon = L.divIcon({
+      html: '<div class="vm ' + cls + on + '">' + (v.isTrain ? TRAIN : BUS) + '</div>',
+      className: '',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+    })
+    const m = L.marker([v.lat, v.lng], { icon, keyboard: false })
+    m.on('click', () => { selected.value = v })
+    m.addTo(busLayer)
   }
 }
 
-function pick(v) {
-  if (map) map.flyTo([v.lat, v.lng], Math.max(map.getZoom(), 14), { duration: 0.6 })
+function soon() {
+  cancelAnimationFrame(raf)
+  raf = requestAnimationFrame(paint)
 }
 
-watch([filter, filtered], paint)
+function pick(v) {
+  selected.value = v
+  if (map) map.flyTo([v.lat, v.lng], Math.max(map.getZoom(), 14), { duration: 0.6 })
+  soon()
+}
+
+function follow() {
+  if (selected.value && map) map.flyTo([selected.value.lat, selected.value.lng], 16, { duration: 0.6 })
+}
+
+watch([filter, filtered], soon)
+watch(selected, soon)
+watch(vehicles, (rows) => {
+  if (!selected.value) return
+  const fresh = rows.find((v) => v.id === selected.value.id && v.agencyId === selected.value.agencyId)
+  if (fresh) selected.value = fresh
+})
 
 onMounted(async () => {
   const mod = await import('leaflet')
@@ -58,15 +91,16 @@ onMounted(async () => {
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19, attribution: '&copy; OpenStreetMap contributors',
   }).addTo(map)
-  layer = L.layerGroup().addTo(map)
-  map.on('moveend zoomend', paint)
+  busLayer = L.layerGroup().addTo(map)
+  map.on('moveend zoomend', soon)
   await feed.refresh('klang-valley')
-  paint()
-  tick = setInterval(async () => { await feed.refresh('klang-valley'); paint() }, 30000)
+  soon()
+  tick = setInterval(async () => { await feed.refresh('klang-valley'); soon() }, 30000)
 })
 
 onUnmounted(() => {
   clearInterval(tick)
+  cancelAnimationFrame(raf)
   if (map) { map.remove(); map = null }
 })
 </script>
@@ -82,6 +116,9 @@ onUnmounted(() => {
         @pick-vehicle="pick"
       />
     </aside>
-    <main class="mapwrap"><div id="map"></div></main>
+    <main class="mapwrap">
+      <div id="map"></div>
+      <VehicleSheet :vehicle="selected" @close="selected = null" @track="follow" />
+    </main>
   </div>
 </template>
