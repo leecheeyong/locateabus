@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import { ref } from 'vue'
 import { AGENCIES } from '../data/regions.js'
 import { cached } from './apiCache.js'
 
