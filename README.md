@@ -1,5 +1,16 @@
-# Vue 3 + Vite
+# LocateABus
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Vue 3 + Vite starter. Goal: show where your bus / train is right now in Malaysia.
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+## Dev
+```
+npm install
+npm run dev
+```
+
+## Roadmap
+- [ ] leaflet map centred on Klang Valley
+- [ ] data.gov.my GTFS realtime vehicles
+- [ ] search + bus/train filter
+- [ ] vehicle sheet
+- [ ] regions, clustering, stops, dark mode
