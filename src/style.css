@@ -1,31 +1,208 @@
-@import "leaflet/dist/leaflet.css";
 @import "tailwindcss";
-:root { font-family: system-ui, sans-serif; }
-html, body, #app { height: 100%; }
-body { margin: 0; background: #f2efe9; color: #1c1a15; }
-.layout { display: flex; height: 100dvh; }
-.sidebar { width: 300px; border-right: 1px solid #e2dccd; background: #fbfaf7; display: flex; flex-direction: column; }
-.mapwrap { position: relative; flex: 1; }
-#map { position: absolute; inset: 0; }
-.search { padding: 12px; border-bottom: 1px solid #e2dccd; }
-.search input { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #e2dccd; border-radius: 8px; }
-.tabs { display: flex; gap: 4px; margin-top: 8px; }
-.tabs button { flex: 1; padding: 6px; border: 1px solid #e2dccd; background: #fff; border-radius: 8px; font-size: 12px; }
-.tabs button.on { background: #1c1a15; color: #fbfaf7; }
-.list { overflow-y: auto; flex: 1; }
-.row { width: 100%; text-align: left; padding: 8px 12px; border: 0; border-bottom: 1px solid #eee; background: transparent; cursor: pointer; }
-.row:hover { background: #f2efe9; }
-.row .sub { color: #78746a; font-size: 11px; font-family: monospace; }
+@import "leaflet/dist/leaflet.css";
 
-/* v1 vehicle markers — colours will move to tailwind theme in commit 07 */
-.vm { width: 28px; height: 28px; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
-.vm-bus { background: #1c1a15; color: #fbfaf7; }
-.vm-train { background: #fbfaf7; color: #1c1a15; border: 1.5px solid #1c1a15; }
-.vm-on { outline: 2px solid #c8501a; outline-offset: 2px; }
-.sheet {
-  position: absolute; right: 12px; bottom: 12px; z-index: 500;
-  width: 280px; background: #fbfaf7; border: 1px solid #e2dccd; border-radius: 14px; padding: 12px;
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --color-paper: #f2efe9;
+  --color-cream: #fbfaf7;
+  --color-ink: #1c1a15;
+  --color-fog: #78746a;
+  --color-line: #e2dccd;
+  --color-clay: #c8501a;
+  --color-moss: #2f5d50;
+  --color-night: #141310;
+  --color-coal: #1e1d18;
+  --color-smoke: #a19a8a;
+  --color-seam: #2b2a24;
 }
-.sheet .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 10px 0; font-size: 13px; }
-.sheet button { padding: 8px; border-radius: 8px; border: 1px solid #e2dccd; }
-.sheet .primary { background: #1c1a15; color: #fbfaf7; border-color: #1c1a15; }
+
+html, body, #app {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.dark body {
+  background: var(--color-night);
+  color: #ece8de;
+}
+
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: #e9e4d7;
+  outline: none;
+}
+
+.dark .leaflet-container {
+  background: #10100d;
+}
+
+.dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9);
+}
+
+.leaflet-control-zoom {
+  display: none;
+}
+
+.leaflet-control-attribution {
+  font-size: 10px !important;
+  font-family: var(--font-mono) !important;
+  background: rgba(251, 250, 247, 0.85) !important;
+  color: #8a8578 !important;
+  padding: 1px 7px !important;
+}
+
+.dark .leaflet-control-attribution {
+  background: rgba(20, 19, 16, 0.85) !important;
+  color: #6d675c !important;
+}
+
+.leaflet-control-attribution a {
+  color: inherit !important;
+}
+
+.leaflet-tooltip.stop-tip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  border-radius: 8px;
+  border: 1px solid var(--color-line);
+  background: var(--color-cream);
+  color: var(--color-ink);
+  box-shadow: none;
+  padding: 3px 8px;
+}
+
+.dark .leaflet-tooltip.stop-tip {
+  background: var(--color-coal);
+  color: #ece8de;
+  border-color: var(--color-seam);
+}
+
+.vm {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border: 1.5px solid transparent;
+}
+
+.vm-bus {
+  background: #1c1a15;
+  color: #fbfaf7;
+}
+
+.vm-train {
+  background: #fbfaf7;
+  color: #1c1a15;
+  border-color: #1c1a15;
+}
+
+.dark .vm-bus {
+  background: #ece8de;
+  color: #141310;
+}
+
+.dark .vm-train {
+  background: #141310;
+  color: #ece8de;
+  border-color: #ece8de;
+}
+
+.vm svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+.vm-on {
+  outline: 2px solid var(--color-clay);
+  outline-offset: 2px;
+}
+
+.bunch {
+  background: #1c1a15;
+  color: #fbfaf7;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  padding: 7px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid #1c1a15;
+}
+
+.dark .bunch {
+  background: #ece8de;
+  color: #141310;
+  border-color: #ece8de;
+}
+
+.nice-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.nice-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nice-scroll::-webkit-scrollbar-thumb {
+  background: #d3ccbb;
+  border-radius: 99px;
+}
+
+.dark .nice-scroll::-webkit-scrollbar-thumb {
+  background: #3a382f;
+}
+
+@keyframes rise {
+  from { transform: translateY(14px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.rise {
+  animation: rise 0.18s ease-out;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.dot-live {
+  animation: blink 1.7s ease-in-out infinite;
+}
+
+.grab {
+  width: 36px;
+  height: 4px;
+  border-radius: 99px;
+  background: #d3ccbb;
+}
+
+.dark .grab {
+  background: #3a382f;
+}
+
+input::placeholder {
+  color: #a19a8a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot-live, .rise {
+    animation: none;
+  }
+}
