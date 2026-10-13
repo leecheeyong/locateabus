@@ -19,8 +19,16 @@
   --color-seam: #2b2a24;
 }
 
-html, body, #app {
+html,
+body,
+#app {
   height: 100%;
+}
+
+html,
+body {
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
@@ -97,6 +105,15 @@ body {
   justify-content: center;
   position: relative;
   border: 1.5px solid transparent;
+  cursor: pointer;
+}
+
+
+.vm::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 16px;
 }
 
 .vm-bus {
@@ -169,8 +186,14 @@ body {
 }
 
 @keyframes rise {
-  from { transform: translateY(14px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(14px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .rise {
@@ -178,8 +201,13 @@ body {
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 .dot-live {
@@ -197,12 +225,76 @@ body {
   background: #3a382f;
 }
 
+.sheet-grip {
+  flex-shrink: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: pointer;
+}
+
+.sheet-grip .grab {
+  margin: 10px auto 6px;
+}
+
+.grip-row {
+  display: flex;
+  width: 100%;
+  height: 44px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.grip-row:focus-visible {
+  outline: 2px solid var(--color-clay);
+  outline-offset: -6px;
+  border-radius: 12px;
+}
+
+.grip-chev {
+  transition: transform 0.2s ease-out;
+}
+
+.sheet-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  background: rgba(20, 19, 16, 0.4);
+  animation: fade 0.18s ease-out;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .above-grip {
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 input::placeholder {
   color: #a19a8a;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dot-live, .rise {
+  .dot-live,
+  .rise,
+  .sheet-scrim,
+  .grip-chev {
     animation: none;
+    transition: none;
   }
 }

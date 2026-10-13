@@ -1,6 +1,6 @@
 <script setup>
-import { ref, watch } from 'vue'
-import { formatDist } from '../composables/useGeo.js'
+import { ref, watch } from "vue";
+import { formatDist } from "../composables/useGeo.js";
 
 const props = defineProps({
   query: String,
@@ -8,95 +8,162 @@ const props = defineProps({
   vehicles: Array,
   stops: Array,
   userLoc: Object,
+  favorites: Array,
   counts: Object,
   places: Array,
   searchingPlaces: Boolean,
   stopsLoading: Boolean,
   stopsError: Boolean,
-})
+  feedError: Boolean,
+});
 
 const emit = defineEmits([
-  'update:query', 'update:filter',
-  'pick-vehicle', 'pick-place', 'pick-stop',
-])
+  "update:query",
+  "update:filter",
+  "pick-vehicle",
+  "pick-place",
+  "pick-stop",
+  "toggle-fav",
+  "retry",
+]);
 
-const limit = ref(40)
-watch(() => [props.query, props.filter], () => { limit.value = 40 })
+const limit = ref(40);
+watch(
+  () => [props.query, props.filter],
+  () => {
+    limit.value = 40;
+  },
+);
+
+function saved(id) {
+  return props.favorites.includes(id);
+}
 
 function far(v) {
-  if (!props.userLoc) return ''
-  return formatDist(v._km ?? 0)
+  if (!props.userLoc) return "";
+  return formatDist(v._km ?? 0);
 }
 
 function sub(v) {
-  const bits = [v.agencyName]
-  if (v.routeId) bits.push('route ' + v.routeId)
-  bits.push((v.speed ?? '-') + ' km/h')
-  return bits.join(' · ')
+  const bits = [v.agencyName];
+  if (v.routeId) bits.push("route " + v.routeId);
+  bits.push((v.speed ?? "-") + " km/h");
+  return bits.join(" · ");
 }
 
 function stopMeta(s) {
-  const bits = []
-  if (s.ref) bits.push(s.ref)
-  if (s.shelter) bits.push('shelter')
-  else if (s.bench) bits.push('bench')
-  if (props.userLoc) bits.push(formatDist(s._km))
-  return bits.join(' · ')
+  const bits = [];
+  if (s.ref) bits.push(s.ref);
+  if (s.shelter) bits.push("shelter");
+  else if (s.bench) bits.push("bench");
+  if (props.userLoc) bits.push(formatDist(s._km));
+  return bits.join(" · ");
 }
 
 const tabs = [
-  { id: 'all', label: 'All' },
-  { id: 'bus', label: 'Bus' },
-  { id: 'train', label: 'Train' },
-  { id: 'stops', label: 'Stops' },
-]
+  { id: "all", label: "All" },
+  { id: "bus", label: "Bus" },
+  { id: "train", label: "Train" },
+  { id: "stops", label: "Stops" },
+];
 
 function nFor(id) {
-  if (!props.counts) return ''
-  if (id === 'all') return props.counts.all
-  if (id === 'bus') return props.counts.bus
-  if (id === 'train') return props.counts.train
-  return props.stops.length
+  if (!props.counts) return "";
+  if (id === "all") return props.counts.all;
+  if (id === "bus") return props.counts.bus;
+  if (id === "train") return props.counts.train;
+  return props.stops.length;
 }
 </script>
 
 <template>
   <div class="flex min-h-0 flex-1 flex-col">
     <div class="px-4 pt-1">
-      <div class="flex items-center gap-2 rounded-[12px] border border-line bg-paper px-3 py-2.5">
-        <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-fog" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <div
+        class="flex items-center gap-2 rounded-[12px] border border-line bg-paper px-3 py-2.5 focus-within:border-ink dark:border-seam dark:bg-night dark:focus-within:border-smoke"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          class="h-4 w-4 shrink-0 text-fog dark:text-smoke"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
         <input
           :value="query"
           @input="emit('update:query', $event.target.value)"
           type="text"
           placeholder="Bus, route, plate, or a place"
-          class="w-full bg-transparent text-[13px] outline-none"
+          class="w-full bg-transparent text-[13px] text-ink outline-none dark:text-[#ece8de]"
           aria-label="Search"
         />
-        <button v-if="query" @click="emit('update:query', '')" class="text-fog" aria-label="Clear">
-          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>
-        </button>
-      </div>
-
-      <div v-if="places && places.length" class="mt-2 overflow-hidden rounded-[12px] border border-line bg-paper">
         <button
-          v-for="p in places" :key="p.full"
-          @click="emit('pick-place', p)"
-          class="flex w-full items-center gap-2 border-b border-line px-3 py-2 text-left last:border-0 hover:bg-cream"
+          v-if="query"
+          @click="emit('update:query', '')"
+          class="text-fog dark:text-smoke"
+          aria-label="Clear"
         >
-          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5 shrink-0 text-fog" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
-          <span class="truncate text-[12px]">{{ p.name }}</span>
+          <svg
+            viewBox="0 0 24 24"
+            class="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M6 6l12 12M18 6 6 18" />
+          </svg>
         </button>
       </div>
-      <p v-else-if="searchingPlaces" class="mt-2 px-1 font-mono text-[11px] text-fog">looking up places</p>
 
-      <div class="mt-2.5 flex rounded-[12px] border border-line p-1" role="tablist" aria-label="Type">
+      <div
+        v-if="places && places.length"
+        class="mt-2 overflow-hidden rounded-[12px] border border-line bg-paper dark:border-seam dark:bg-night"
+      >
         <button
-          v-for="t in tabs" :key="t.id"
+          v-for="p in places"
+          :key="p.full"
+          @click="emit('pick-place', p)"
+          class="flex w-full items-center gap-2 border-b border-line px-3 py-2 text-left last:border-0 hover:bg-cream dark:border-seam dark:hover:bg-coal"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            class="h-3.5 w-3.5 shrink-0 text-fog"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z" />
+            <circle cx="12" cy="10" r="2.5" />
+          </svg>
+          <span class="truncate text-[12px] text-ink dark:text-[#ece8de]">{{
+            p.name
+          }}</span>
+        </button>
+      </div>
+      <p
+        v-else-if="searchingPlaces"
+        class="mt-2 px-1 font-mono text-[11px] text-fog"
+      >
+        looking up places
+      </p>
+
+      <div
+        class="mt-2.5 flex rounded-[12px] border border-line p-1 dark:border-seam"
+        role="tablist"
+        aria-label="Type"
+      >
+        <button
+          v-for="t in tabs"
+          :key="t.id"
           @click="emit('update:filter', t.id)"
           :class="[
             'flex flex-1 items-center justify-center gap-1 rounded-[8px] py-1.5 text-[12px] font-medium',
-            filter === t.id ? 'bg-ink text-cream' : 'text-fog',
+            filter === t.id
+              ? 'bg-ink text-cream dark:bg-[#ece8de] dark:text-night'
+              : 'text-fog dark:text-smoke',
           ]"
         >
           {{ t.label }}
@@ -105,54 +172,187 @@ function nFor(id) {
       </div>
     </div>
 
-    <div class="nice-scroll mt-1 min-h-0 flex-1 overflow-y-auto px-4 pb-3">
+    <div
+      class="nice-scroll mt-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-3"
+    >
       <template v-if="filter === 'stops'">
-        <p v-if="stopsLoading" class="py-4 font-mono text-[11px] text-fog">pulling stops near the map</p>
-        <p v-else-if="stopsError" class="mt-2 rounded-[12px] border border-line bg-paper px-3 py-2.5 text-[12px]">Stops are down for now. Buses still move.</p>
-        <p v-else-if="!stops.length" class="py-4 text-[12px] text-fog">Nothing here yet. Zoom to street level and stops fill in around the middle of the map.</p>
-        <button
-          v-for="s in stops" :key="s.id"
-          @click="emit('pick-stop', s)"
-          class="flex w-full items-center gap-3 border-b border-line py-2.5 text-left last:border-0"
+        <p v-if="stopsLoading" class="py-4 font-mono text-[11px] text-fog">
+          pulling stops near the map
+        </p>
+        <p
+          v-else-if="stopsError"
+          class="mt-2 rounded-[12px] border border-line bg-paper px-3 py-2.5 text-[12px] leading-relaxed text-ink dark:border-seam dark:bg-night dark:text-[#ece8de]"
         >
-          <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] border border-line text-fog">
-            <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          Stops are down for now. Buses still move. Come back in a bit.
+        </p>
+        <p
+          v-else-if="!stops.length"
+          class="py-4 text-[12px] leading-relaxed text-fog"
+        >
+          Nothing here yet. Zoom to street level and stops fill in around the
+          middle of the map.
+        </p>
+        <button
+          v-for="s in stops"
+          :key="s.id"
+          @click="emit('pick-stop', s)"
+          class="flex w-full items-center gap-3 border-b border-line py-2.5 text-left last:border-0 dark:border-seam"
+        >
+          <span
+            class="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] border border-line text-fog dark:border-seam dark:text-smoke"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              class="h-3.5 w-3.5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z" />
+              <circle cx="12" cy="10" r="2.5" />
+            </svg>
           </span>
           <span class="min-w-0 flex-1">
-            <span class="block truncate text-[13px]">{{ s.name }}</span>
-            <span class="block truncate font-mono text-[11px] text-fog">{{ stopMeta(s) }}</span>
+            <span
+              class="block truncate text-[13px] text-ink dark:text-[#ece8de]"
+              >{{ s.name }}</span
+            >
+            <span class="block truncate font-mono text-[11px] text-fog">{{
+              stopMeta(s)
+            }}</span>
           </span>
         </button>
       </template>
 
       <template v-else>
-        <div class="flex items-baseline justify-between py-2">
-          <p class="font-mono text-[10px] uppercase tracking-[0.12em] text-fog">{{ vehicles.length }} listed</p>
-          <p v-if="userLoc" class="font-mono text-[10px] text-fog">closest first</p>
+        <div
+          v-if="feedError && !vehicles.length"
+          class="mt-2 rounded-[12px] border border-line px-3 py-4 text-center dark:border-seam"
+        >
+          <p class="text-[13px] font-medium text-ink dark:text-[#ece8de]">
+            Feed is down
+          </p>
+          <p class="mt-1 text-[12px] text-fog">
+            Check connection, then try again.
+          </p>
+          <button
+            @click="emit('retry')"
+            class="mt-3 min-h-[40px] w-full rounded-[10px] bg-ink text-[12px] font-medium text-cream dark:bg-[#ece8de] dark:text-night"
+          >
+            Try again
+          </button>
         </div>
-        <p v-if="!vehicles.length" class="py-3 text-[12px] text-fog">No match. Try a shorter number or another tab.</p>
-        <button
-          v-for="v in vehicles.slice(0, limit)" :key="v.id + v.agencyId"
-          @click="emit('pick-vehicle', v)"
-          class="flex w-full items-center gap-3 border-b border-line py-2.5 text-left last:border-0"
-        >
-          <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-ink text-cream">
-            <svg v-if="!v.isTrain" viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="4" width="14" height="12" rx="2"/><path d="M5 10h14M8 20v-4M16 20v-4"/></svg>
-            <svg v-else viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="3" width="12" height="14" rx="2"/><path d="M6 10h12"/></svg>
-          </span>
-          <span class="min-w-0 flex-1 leading-tight">
-            <span class="block truncate text-[13px] font-medium">{{ v.id }}<span v-if="v.routeId" class="ml-1.5 font-mono text-[10px] font-normal text-fog">{{ v.routeId }}</span></span>
-            <span class="block truncate text-[11px] text-fog">{{ sub(v) }}</span>
-          </span>
-          <span v-if="far(v)" class="shrink-0 font-mono text-[11px] text-fog">{{ far(v) }}</span>
-        </button>
-        <button
-          v-if="vehicles.length > limit"
-          @click="limit += 40"
-          class="mt-2 w-full rounded-[10px] border border-line py-2.5 font-mono text-[11px] text-fog"
-        >
-          more · {{ vehicles.length - limit }} left
-        </button>
+        <template v-else>
+          <div class="flex items-baseline justify-between py-2">
+            <p
+              class="font-mono text-[10px] uppercase tracking-[0.12em] text-fog"
+            >
+              {{ vehicles.length }} listed<span v-if="feedError"> · held</span>
+            </p>
+            <p v-if="userLoc" class="font-mono text-[10px] text-fog">
+              closest first
+            </p>
+          </div>
+          <p
+            v-if="!vehicles.length && filter === 'train'"
+            class="py-3 text-[12px] leading-relaxed text-fog"
+          >
+            No trains in the feed right now. The rail feed drops out at times,
+            last-known trains return on their own.
+          </p>
+          <p v-else-if="!vehicles.length" class="py-3 text-[12px] text-fog">
+            No match. Try a shorter number or another tab.
+          </p>
+          <button
+            v-for="v in vehicles.slice(0, limit)"
+            :key="v.id + v.agencyId"
+            @click="emit('pick-vehicle', v)"
+            class="flex w-full items-center gap-3 border-b border-line py-2.5 text-left last:border-0 dark:border-seam"
+          >
+            <span
+              :class="[
+                'flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] text-cream',
+                v.isTrain
+                  ? 'bg-moss text-cream'
+                  : 'bg-ink dark:bg-[#ece8de] dark:text-night',
+              ]"
+            >
+              <svg
+                v-if="!v.isTrain"
+                viewBox="0 0 24 24"
+                class="h-3.5 w-3.5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <rect x="5" y="4" width="14" height="12" rx="2" />
+                <path d="M5 10h14M8 20v-4M16 20v-4" />
+              </svg>
+              <svg
+                v-else
+                viewBox="0 0 24 24"
+                class="h-3.5 w-3.5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <rect x="6" y="3" width="12" height="14" rx="2" />
+                <path d="M6 10h12" />
+              </svg>
+            </span>
+            <span class="min-w-0 flex-1 leading-tight">
+              <span
+                class="block truncate text-[13px] font-medium text-ink dark:text-[#ece8de]"
+                >{{ v.id
+                }}<span
+                  v-if="v.routeId"
+                  class="ml-1.5 font-mono text-[10px] font-normal text-fog"
+                  >{{ v.routeId }}</span
+                ></span
+              >
+              <span class="block truncate text-[11px] text-fog">{{
+                sub(v)
+              }}</span>
+            </span>
+            <span v-if="far(v)" class="shrink-0 font-mono text-[11px] text-fog"
+              >{{ far(v) }}<span v-if="v.stale"> held</span></span
+            >
+            <span
+              v-else-if="v.stale"
+              class="shrink-0 font-mono text-[11px] text-fog"
+              >held</span
+            >
+            <span
+              @click.stop="emit('toggle-fav', v)"
+              class="shrink-0 p-1"
+              :aria-label="saved(v.id) ? 'Remove' : 'Keep'"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                :class="[
+                  'h-4 w-4',
+                  saved(v.id)
+                    ? 'fill-clay text-clay'
+                    : 'text-line dark:text-seam',
+                ]"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6L3.2 9.4l6.1-.8L12 3z"
+                />
+              </svg>
+            </span>
+          </button>
+          <button
+            v-if="vehicles.length > limit"
+            @click="limit += 40"
+            class="mt-2 w-full rounded-[10px] border border-line py-2.5 font-mono text-[11px] text-fog dark:border-seam"
+          >
+            more · {{ vehicles.length - limit }} left
+          </button>
+        </template>
       </template>
     </div>
   </div>
