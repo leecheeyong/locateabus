@@ -639,7 +639,7 @@ onUnmounted(() => {
               class="dot-live mr-1 inline-block h-1.5 w-1.5 rounded-full"
               :class="isLive ? 'bg-moss' : counts.all ? 'bg-clay' : 'bg-fog'"
             ></span
-            >{{ statusWord }} · {{ counts.all }}
+            >{{ statusWord }}
           </p>
         </div>
       </div>

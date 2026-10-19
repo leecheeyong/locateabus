@@ -63,8 +63,7 @@ function stopMeta(s) {
 const tabs = [
   { id: "all", label: "All" },
   { id: "bus", label: "Bus" },
-  { id: "train", label: "Train" },
-  { id: "stops", label: "Stops" },
+  { id: "train", label: "Train" }
 ];
 
 function nFor(id) {
