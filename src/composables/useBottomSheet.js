@@ -2,8 +2,8 @@ import { reactive, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 
 const MQ = "(max-width: 767.98px)";
 const ORDER = ["peek", "half", "full"];
-const FLICK = 0.45; 
-const SLOP = 6; 
+const FLICK = 0.45;
+const SLOP = 6;
 const TAP_MS = 400;
 
 const now = () => performance.now();
@@ -24,7 +24,7 @@ export function useBottomSheet(elRef, gripRef) {
   let mq = null;
   let onMqChange = null;
   let onWinResize = null;
-  let y = 0; 
+  let y = 0;
   let frame = 0;
   let settleT = 0;
   let resizeT = 0;
@@ -104,7 +104,7 @@ export function useBottomSheet(elRef, gripRef) {
     clearTimeout(settleT);
     node.style.willChange = "transform";
     if (animate && !reduced) {
-      void node.offsetWidth; 
+      void node.offsetWidth;
       node.style.transition = "transform 300ms cubic-bezier(.22,.61,.36,1)";
       writeNow(node, to);
       settleT = setTimeout(() => {

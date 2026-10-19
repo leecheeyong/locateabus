@@ -746,9 +746,6 @@ onUnmounted(() => {
           >
             Near you
           </p>
-          <p class="font-mono text-[10px] text-fog dark:text-smoke">
-            {{ counts.all }} on map
-          </p>
         </div>
         <SearchPanel
           :query="query"
