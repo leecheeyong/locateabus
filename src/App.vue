@@ -632,15 +632,6 @@ onUnmounted(() => {
           <p class="truncate text-[15px] font-semibold tracking-tight">
             locateabus
           </p>
-          <p
-            class="mt-1 hidden font-mono text-[10px] uppercase tracking-[0.12em] text-fog sm:block dark:text-smoke"
-          >
-            <span
-              class="dot-live mr-1 inline-block h-1.5 w-1.5 rounded-full"
-              :class="isLive ? 'bg-moss' : counts.all ? 'bg-clay' : 'bg-fog'"
-            ></span
-            >{{ statusWord }}
-          </p>
         </div>
       </div>
       <div class="ml-auto flex items-center gap-2">

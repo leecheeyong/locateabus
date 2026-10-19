@@ -1,6 +1,6 @@
 # LocateABus
 
-Vue 3 + Vite starter. Goal: show where your bus / train is right now in Malaysia. Buses and trains are only visible on the map during operating hours.
+Vue 3 + Vite starter. Goal: show where your bus / train is right now in Malaysia. Buses and trains are only visible on the map during operating hours. This app uses data from [data.gov.my](https://data.gov.my).
 
 ## Dev
 
