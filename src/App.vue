@@ -730,14 +730,6 @@ onUnmounted(() => {
             </svg>
           </button>
         </div>
-
-        <div class="hidden items-center gap-2 px-4 pb-1 pt-3 md:flex">
-          <p
-            class="flex-1 font-mono text-[10px] uppercase tracking-[0.14em] text-fog dark:text-smoke"
-          >
-            Near you
-          </p>
-        </div>
         <SearchPanel
           :query="query"
           :filter="filter"
